@@ -2,14 +2,40 @@ import SwiftUI
 
 @main
 struct TakeStudioApp: App {
-    @State private var cameraViewModel = CameraViewModel()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @State private var cameraViewModel: CameraViewModel?
 
     var body: some Scene {
         WindowGroup {
-            CameraView(viewModel: cameraViewModel)
-                .toolbar(.hidden, for: .navigationBar)
-                .statusBarHidden(true)
-                .preferredColorScheme(.dark)
+            Group {
+                if let cameraViewModel {
+                    CameraView(viewModel: cameraViewModel)
+                } else {
+                    Color.black
+                        .ignoresSafeArea()
+                        .overlay {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                }
+            }
+            .preferredColorScheme(.dark)
+            .statusBarHidden(true)
+            .task {
+                if cameraViewModel == nil {
+                    cameraViewModel = CameraViewModel()
+                }
+            }
         }
+    }
+}
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        TemporaryCaptureStore.purgeStale()
+        return true
     }
 }

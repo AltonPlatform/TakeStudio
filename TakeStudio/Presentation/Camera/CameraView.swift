@@ -4,6 +4,7 @@ import UIKit
 
 struct CameraView: View {
     @Bindable var viewModel: CameraViewModel
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedBackgroundItem: PhotosPickerItem?
     @State private var backgroundPickerIsVideo = false
     @State private var showGalleryPicker = false
@@ -27,11 +28,19 @@ struct CameraView: View {
                 )
             }
         }
-        .onAppear {
-            Task { await viewModel.prepareIfNeeded() }
+        .task {
+            await viewModel.prepareIfNeeded()
         }
-        .onDisappear {
-            Task { await viewModel.stopSessionUnlessPresentingGallery() }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:
+                guard case .capturing = viewModel.phase else { return }
+                Task { await viewModel.prepareIfNeeded() }
+            case .background:
+                Task { await viewModel.stopSessionUnlessPresentingGallery() }
+            default:
+                break
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .statusBarHidden(true)
@@ -82,6 +91,7 @@ struct CameraView: View {
                 renderer: viewModel.previewRenderer,
                 isActive: !viewModel.isImportingFromGallery
             )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
 
             FocusIndicatorView(state: viewModel.focusIndicator)
@@ -147,6 +157,19 @@ struct CameraView: View {
 
     private var topBar: some View {
         HStack(spacing: 8) {
+            // Keep left slot so flash/timer stay right-aligned (same geometry as AltonApp close button).
+            Button {
+                withAnimation { viewModel.showAdvancedControls.toggle() }
+            } label: {
+                Image(systemName: viewModel.showAdvancedControls ? "chevron.down" : "slider.horizontal.3")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(viewModel.showAdvancedControls ? CameraChrome.accent : .white)
+                    .frame(width: CameraChrome.controlSize, height: CameraChrome.controlSize)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .opacity(viewModel.isRecording ? 0 : 1)
+            .disabled(viewModel.isRecording)
+
             Spacer()
 
             if viewModel.isRecording {
@@ -160,16 +183,6 @@ struct CameraView: View {
                     .padding(.vertical, 6)
                     .background(.orange.opacity(0.85), in: Capsule())
                     .frame(maxWidth: 220)
-            } else {
-                Button {
-                    withAnimation { viewModel.showAdvancedControls.toggle() }
-                } label: {
-                    Image(systemName: viewModel.showAdvancedControls ? "chevron.down" : "slider.horizontal.3")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(viewModel.showAdvancedControls ? CameraChrome.accent : .white)
-                        .frame(width: CameraChrome.controlSize, height: CameraChrome.controlSize)
-                        .background(.ultraThinMaterial, in: Circle())
-                }
             }
 
             Spacer()
@@ -182,6 +195,7 @@ struct CameraView: View {
                 )
                 TimerPickerLabel(delay: viewModel.timerDelay, action: viewModel.cycleTimerDelay)
             }
+            .frame(minWidth: CameraChrome.controlSize * 2 + 8, alignment: .trailing)
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
