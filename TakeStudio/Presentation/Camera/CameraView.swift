@@ -4,7 +4,6 @@ import UIKit
 
 struct CameraView: View {
     @Bindable var viewModel: CameraViewModel
-    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedBackgroundItem: PhotosPickerItem?
     @State private var backgroundPickerIsVideo = false
     @State private var showGalleryPicker = false
@@ -28,19 +27,11 @@ struct CameraView: View {
                 )
             }
         }
-        .task {
-            await viewModel.prepareIfNeeded()
+        .onAppear {
+            Task { await viewModel.prepareIfNeeded() }
         }
-        .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .active:
-                guard case .capturing = viewModel.phase else { return }
-                Task { await viewModel.prepareIfNeeded() }
-            case .background:
-                Task { await viewModel.stopSessionUnlessPresentingGallery() }
-            default:
-                break
-            }
+        .onDisappear {
+            Task { await viewModel.stopSessionUnlessPresentingGallery() }
         }
         .toolbar(.hidden, for: .navigationBar)
         .statusBarHidden(true)

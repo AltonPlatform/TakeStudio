@@ -3,29 +3,11 @@ import SwiftUI
 @main
 struct TakeStudioApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @State private var cameraViewModel: CameraViewModel?
+    @State private var cameraViewModel = CameraViewModel()
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                if let cameraViewModel {
-                    CameraView(viewModel: cameraViewModel)
-                } else {
-                    Color.black
-                        .ignoresSafeArea()
-                        .overlay {
-                            ProgressView()
-                                .tint(.white)
-                        }
-                }
-            }
-            .preferredColorScheme(.dark)
-            .statusBarHidden(true)
-            .task {
-                if cameraViewModel == nil {
-                    cameraViewModel = CameraViewModel()
-                }
-            }
+            CameraView(viewModel: cameraViewModel)
         }
     }
 }
