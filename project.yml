@@ -1,0 +1,45 @@
+name: TakeStudio
+options:
+  bundleIdPrefix: com.alton
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+    DEVELOPMENT_TEAM: X6GV877JLH
+    CODE_SIGN_STYLE: Automatic
+targets:
+  TakeStudio:
+    type: application
+    platform: iOS
+    sources:
+      - path: TakeStudio
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.alton.takestudio
+        INFOPLIST_FILE: TakeStudio/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0
+        OTHER_SWIFT_FLAGS: "$(inherited) -Xcc -DCI_SILENCE_GL_DEPRECATION"
+schemes:
+  TakeStudio:
+    build:
+      targets:
+        TakeStudio: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
